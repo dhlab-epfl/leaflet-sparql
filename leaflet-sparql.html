@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+	<head>
+
+		<!-- LEAFLET external library for webmapping -->
+
+		<link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css" />
+		<script src="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
+
+		<!-- JQUERY general javascript helper library -->
+
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+
+		<!-- JQUERY GEO to transform from WKT to GEOJSON -->
+
+		<script src="http://code.jquerygeo.com/jquery.geo-1.0.0-b2.min.js"></script>
+
+
+
+		<!-- JAVASCRIPT application logic-->
+
+		<script>
+
+			var map; // This variable holds the Leaflet map object
+			var layer; // This layer will hold the features we get from the sparql endpoint
+
+			// Basic configuration
+			var endPoint = 'http://128.178.21.39:8890/sparql';
+			var sparqlQuery = 'PREFIX geo: <http://www.opengis.net/ont/geosparql#> \
+PREFIX virtrdf: <http://www.openlinksw.com/schemas/virtrdf#>\
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\
+PREFIX : <http://dhlab.epfl.ch/vtm/#>\
+SELECT  *\
+FROM    <http://dhlab.epfl.ch/vtm/>\
+WHERE   {\
+        ?subject geo:geometry ?geom .\
+        ?subject a ?category .\
+        FILTER (\
+            bif:st_intersects ( ?geom, bif:st_geomfromtext("BOX({{xmin}} {{ymin}}, {{xmax}} {{ymax}})") )\
+        )\
+}\
+LIMIT 1000\
+';
+
+			/* note : If you get "No 'Access-Control-Allow-Origin' header is present on the requested resource. Origin 'null' is therefore not allowed access.", see http://virtuoso.openlinksw.com/dataspace/doc/dav/wiki/Main/VirtTipsAndTricksCORsEnableSPARQLURLs to allow CORS on the Sparql endpoint */
+
+			/* note : {{xmin}}, {{ymin}}, {{xmax}} and {{ymax}} are replaced by the current boundaries before the sparql query is issued (see code below) to allow to filter the results to a certain extent */
+
+
+			// General setup (on DOM ready)
+			$( document ).ready(function() {
+
+				// Setup the Leaflet map with a default view and zom
+				map = L.map('map').setView([45.4375, 12.3358], 13);
+
+				// Add a background layer from external tiles
+				L.tileLayer('http://otile1.mqcdn.com/tiles/1.0.0/map/{z}/{x}/{y}.png').addTo(map);
+
+				layer = L.layerGroup().addTo(map);
+
+				// Bind the moveend function with the reloadContent function
+				map.on("moveend", reloadContent);
+
+				// Trigger the loading of content
+				reloadContent();
+
+			});
+
+			// Execution and loading of the AJAX query to the Sparql endpoint
+			function reloadContent(){
+
+
+				// Replace map variables in the sparql query
+
+				var sparqlQ = sparqlQuery;
+				sparqlQ = sparqlQ.replace('{{xmin}}', map.getBounds().getWest() );
+				sparqlQ = sparqlQ.replace('{{xmax}}', map.getBounds().getEast() );
+				sparqlQ = sparqlQ.replace('{{ymin}}', map.getBounds().getSouth() );
+				sparqlQ = sparqlQ.replace('{{ymax}}', map.getBounds().getNorth() );
+
+
+				// Make an AJAX query to the Sparql endpoint
+
+				$.ajax( { 
+					url: endPoint,
+					data: {'query': sparqlQ},
+					dataType: 'json'
+				}).done( function(data){
+
+					// If the query succeeds
+
+					console.log("Success: \n\nGot " + data.results.bindings.length + " results"  );
+
+
+					// Transform the result from Virtuoso's Json to GeoJSON (not needed with Strabon which can do it natively)
+
+					var geojson = {type: 'FeatureCollection', features: []};
+
+					$.each(data.results.bindings, function(i,bindings){
+
+						feature = {
+							type: "Feature",
+					        geometry: $.geo.WKT.parse(bindings.geom.value),
+					        properties: {
+					        	subject: bindings.subject.value,					        	
+					        	category: bindings.category.value
+					        }
+					    };
+
+						geojson.features.push( feature );
+					});
+
+
+					// Display the GeoJSON
+
+					layer.clearLayers();
+					L.geoJson(geojson, {
+
+						// With a different style depending on the category
+						style: function (feature) {
+							if(feature.properties.category=='http://dhlab.epfl.ch/vtm/#class_lot'){
+						        return {color: "#08F"};
+							}
+							else{
+						        return {color: "#F00"};
+							}
+					    },
+
+					    // With a popup showing the subject
+					    onEachFeature: function (feature, layer) {
+					        layer.bindPopup(feature.properties.subject);
+					    }
+
+					}).addTo(layer);
+
+
+				}).fail( function(jqXHR, textStatus, errorThrown){
+
+					// If the query fails, we display the error in the console
+
+					console.log("Failure: \n\n"+errorThrown+"\n"+jqXHR.responseText);
+
+				});
+
+
+
+			}
+
+		</script>
+
+	</head>
+	<body>
+
+		<!-- This div actually displays the map -->
+
+		<div id="map" style="width: 600px; height: 400px"></div>
+
+	</body>
+</html>

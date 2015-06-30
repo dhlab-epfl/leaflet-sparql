@@ -1,2 +1,30 @@
 # leaflet-sparql
-Simple web map displaying the results of a Sparql query
+
+This web page consists of a very basic **Leaflet webmap** that displays the results of a **Sparql query** on a **Virtuoso endpoint**.
+
+It depends on [Leaflet](http://leafletjs.com/) (webmapping library), [jQuery](https://jquery.com/) (general javascript framework) and [jQueryGeo](http://jquerygeo.com/) (geometry processing library).
+
+It is thought as a base for a more complex web map (multiple/custom queries, editing capabilities, ...).
+
+
+## Usage
+
+To use, change the `endPoint` and the `sparqlQuery` variables (look for `// Basic configuration`).
+
+The code to display the features expects at least to have `?subject`, `?category` and `?geom` returned by the Sparql query, so this must be modified if the Sparql query doesn't return those.
+
+For more advanced modification/styling, please check the [Leaflet API](http://leafletjs.com/).
+
+
+## Notes about Virtuoso
+
+Unlike Strabon, Virtuoso doesn't implement the standard GeoSparql defined by OGC. This means that the Sparql query must be rewritten if the endpoint is not a Virtuoso endpoint.
+
+Unlike Strabon, Virtuoso is unable to serve directly well-formatted GeoJSON to be displayed with leaflet. The following formatting is done to transform Virtuoso's Json response to standard GeoJSON's responses :
+
+- restructure the Json object
+- convert the geographical representation from WKT to GeoJSON
+
+This means that that part of the javascript could be dropped if using Strabon.
+
+By default, Virtuoso doesn't allow CORS (cross-origin requests), which makes it impossible to dynamically load data from Javascript (the error looks like `"No 'Access-Control-Allow-Origin' header is present on the requested resource. Origin 'null' is therefore not allowed access."`). See http://virtuoso.openlinksw.com/dataspace/doc/dav/wiki/Main/VirtTipsAndTricksCORsEnableSPARQLURLs to solve this.
