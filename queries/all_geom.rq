@@ -1,0 +1,7 @@
+PREFIX geo: <http://www.opengis.net/ont/geosparql#> 
+
+SELECT  ?subject ?geom "none" as ?category
+WHERE   {
+        ?subject geo:geometry ?geom .
+}
+LIMIT 1000

@@ -1,0 +1,54 @@
+################################
+# Getting the place of persons
+################################
+
+PREFIX vtm_onto: <http://128.178.21.39:8080/vtm-ontology/>
+PREFIX vtm_data: <http://128.178.21.39:8080/vtm-testset/>
+
+SELECT ?subject ?geom "none" as ?category
+WHERE 
+{
+
+	# A. Person
+
+	# A1. We get the mentions of the person
+	?subject vtm_onto:hasMention ?personMention .
+
+	# A2. We get the dataContainers that compose that mention
+	?personMention vtm_onto:isComposedOf ?dataContainer .
+
+	# A3. We get the mention of insegnia where this person works
+	?dataContainer vtm_onto:worksAt ?insegniaWorksAtMention .
+
+
+	# B. Insegnia
+
+	# B1. We get the entity that corresponds the the inseignia
+	?insegniaEntity vtm_onto:hasMention ?insegniaWorksAtMention .
+
+	# B2. We get the mentions of the insegnia
+	?insegniaEntity vtm_onto:hasMention ?insegniaPlaceMention .
+
+	# B3. We get the dataContainers that compose that mention
+	?insegniaPlaceMention vtm_onto:isComposedOf ?insegniaPlaceDataContainer .
+
+	# B4. We get the mention of the place of the insegnia
+	?insegniaPlaceDataContainer vtm_onto:place ?placeMention .
+
+
+	# C. Place
+
+	# C1. We get the entity that corresponds the the place
+	?placeEntity vtm_onto:hasMention ?placeMention .
+
+	# C2. We get the mentions of the place
+	?placeEntity vtm_onto:hasMention ?placeGeometryMention .
+
+	# C3. We get the dataContainers that compose that mention
+	?placeGeometryMention vtm_onto:isComposedOf ?placeGeometryDataContainer .
+
+	# C4. We get the mention of the place of the insegnia
+	?placeGeometryDataContainer <http://www.opengis.net/ont/geosparql#geometry> ?geom .
+
+	
+}

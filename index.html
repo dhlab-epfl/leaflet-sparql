@@ -26,21 +26,8 @@
 
 			// Basic configuration
 			var endPoint = 'http://128.178.21.39:8890/sparql';
-			var sparqlQuery = 'PREFIX geo: <http://www.opengis.net/ont/geosparql#> \
-PREFIX virtrdf: <http://www.openlinksw.com/schemas/virtrdf#>\
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\
-PREFIX : <http://dhlab.epfl.ch/vtm/#>\
-SELECT  *\
-FROM    <http://dhlab.epfl.ch/vtm/>\
-WHERE   {\
-        ?subject geo:geometry ?geom .\
-        ?subject a ?category .\
-        FILTER (\
-            bif:st_intersects ( ?geom, bif:st_geomfromtext("BOX({{xmin}} {{ymin}}, {{xmax}} {{ymax}})") )\
-        )\
-}\
-LIMIT 1000\
-';
+			var defaultGraphUri = 'http://128.178.21.39:8080/vtm-testset';
+			var defaultQueryFile = 'queries/all_geom.rq';
 
 			/* note : If you get "No 'Access-Control-Allow-Origin' header is present on the requested resource. Origin 'null' is therefore not allowed access.", see http://virtuoso.openlinksw.com/dataspace/doc/dav/wiki/Main/VirtTipsAndTricksCORsEnableSPARQLURLs to allow CORS on the Sparql endpoint */
 
@@ -66,13 +53,25 @@ LIMIT 1000\
 
 			});
 
+			function readFile(file){
+				var xmlhttp;
+				xmlhttp=new XMLHttpRequest();
+				xmlhttp.open('GET', file, false);
+				xmlhttp.send();
+				return xmlhttp.responseText;
+			}
+
 			// Execution and loading of the AJAX query to the Sparql endpoint
 			function reloadContent(){
 
 
 				// Replace map variables in the sparql query
-
-				var sparqlQ = sparqlQuery;
+				var sparqlQueryFile = window.location.hash.substr(1) ? window.location.hash.substr(1) : defaultQueryFile;
+				window.location.hash = sparqlQueryFile;
+				
+				var sparqlQ = readFile( sparqlQueryFile );
+				
+				
 				sparqlQ = sparqlQ.replace('{{xmin}}', map.getBounds().getWest() );
 				sparqlQ = sparqlQ.replace('{{xmax}}', map.getBounds().getEast() );
 				sparqlQ = sparqlQ.replace('{{ymin}}', map.getBounds().getSouth() );
@@ -83,7 +82,7 @@ LIMIT 1000\
 
 				$.ajax( { 
 					url: endPoint,
-					data: {'query': sparqlQ},
+					data: {'query': sparqlQ, 'default-graph-uri': defaultGraphUri},
 					dataType: 'json'
 				}).done( function(data){
 
