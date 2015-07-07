@@ -6,14 +6,7 @@ It depends on [Leaflet](http://leafletjs.com/) (webmapping library), [jQuery](ht
 
 It is thought as a base for a more complex web map (multiple/custom queries, editing capabilities, ...).
 
-
-## Usage
-
-To use, change the `endPoint` and the `sparqlQuery` variables (look for `// Basic configuration`).
-
-The code to display the features expects at least to have `?subject`, `?category` and `?geom` returned by the Sparql query, so this must be modified if the Sparql query doesn't return those.
-
-For more advanced modification/styling, please check the [Leaflet API](http://leafletjs.com/).
+Demo : http://rawgit.com/dhlab-epfl/leaflet-sparql/master/index.html
 
 
 ## Notes about Virtuoso

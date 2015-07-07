@@ -1,0 +1,17 @@
+################################################
+# This query gets is the same as all_geom,
+# but it only loads the features intersecting
+# the viewport
+################################################
+
+PREFIX geo: <http://www.opengis.net/ont/geosparql#> 
+
+SELECT  ?subject ?geom "none" as ?category
+WHERE   {
+        ?subject geo:geometry ?geom .
+
+        FILTER(
+            bif:st_intersects ( ?geom, "POLYGON(({{xmin}} {{ymin}}, {{xmin}} {{ymax}}, {{xmax}} {{ymax}}, {{xmax}} {{ymin}}, {{xmin}} {{ymin}}))"^^virtrdf:Geometry )
+        )
+}
+LIMIT 1000

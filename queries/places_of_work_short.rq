@@ -1,0 +1,26 @@
+################################################
+# This advanced query is the same as
+# places_of_work but more compact
+################################################
+
+PREFIX vtm_onto: <http://128.178.21.39:8080/vtm-ontology/>
+PREFIX vtm_data: <http://128.178.21.39:8080/vtm-testset/>
+PREFIX geo: <http://www.opengis.net/ont/geosparql#> 
+
+SELECT ?subject ?geom "none" as ?category
+WHERE 
+{
+	# A. Person
+	?subject vtm_onto:hasMention/vtm_onto:isComposedOf/vtm_onto:worksAt ?insegniaWorksAtMention .
+
+
+	# B. Insegnia
+	?insegniaEntity vtm_onto:hasMention ?insegniaWorksAtMention .
+	?insegniaEntity vtm_onto:hasMention/vtm_onto:isComposedOf/vtm_onto:place ?placeMention .
+
+
+	# C. Place
+	?placeEntity vtm_onto:hasMention ?placeMention .
+	?placeEntity vtm_onto:hasMention/vtm_onto:isComposedOf/geo:geometry ?geom .
+	
+}

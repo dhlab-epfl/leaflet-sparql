@@ -15,6 +15,13 @@
 
 		<script src="http://code.jquerygeo.com/jquery.geo-1.0.0-b2.min.js"></script>
 
+		<style type="text/css">
+			textarea{
+				width: 100%;
+				height: 200px;
+			}
+		</style>
+
 
 
 		<!-- JAVASCRIPT application logic-->
@@ -27,7 +34,7 @@
 			// Basic configuration
 			var endPoint = 'http://128.178.21.39:8890/sparql';
 			var defaultGraphUri = 'http://128.178.21.39:8080/vtm-testset';
-			var defaultQueryFile = 'queries/all_geom.rq';
+			var queryFiles = ['queries/all_geom.rq','queries/all_geom_filtered.rq','queries/places_of_work.rq','queries/places_of_work_short.rq','queries/bouding_box.rq'];
 
 			/* note : If you get "No 'Access-Control-Allow-Origin' header is present on the requested resource. Origin 'null' is therefore not allowed access.", see http://virtuoso.openlinksw.com/dataspace/doc/dav/wiki/Main/VirtTipsAndTricksCORsEnableSPARQLURLs to allow CORS on the Sparql endpoint */
 
@@ -48,34 +55,40 @@
 				// Bind the moveend function with the reloadContent function
 				map.on("moveend", reloadContent);
 
-				// Trigger the loading of content
-				reloadContent();
+				// Prepare the query select
+				prepareQuerySelect();
 
 			});
 
-			function readFile(file){
-				var xmlhttp;
-				xmlhttp=new XMLHttpRequest();
-				xmlhttp.open('GET', file, false);
-				xmlhttp.send();
-				return xmlhttp.responseText;
+			function prepareQuerySelect(){
+
+				$.each(queryFiles, function(i,item){
+					console.log(item);
+					$('#query_select').append( $('<option>',{value : readFile(item) }).text(item)); 
+				});
+
+				$('#query_select').change(function(){
+					$('#query').val( $('#query_select').val() );
+					reloadContent();				
+				});
+
+				$('#query_select').trigger('change');
+
 			}
+
+			
 
 			// Execution and loading of the AJAX query to the Sparql endpoint
 			function reloadContent(){
 
-
 				// Replace map variables in the sparql query
-				var sparqlQueryFile = window.location.hash.substr(1) ? window.location.hash.substr(1) : defaultQueryFile;
-				window.location.hash = sparqlQueryFile;
 				
-				var sparqlQ = readFile( sparqlQueryFile );
+				var sparqlQ = $('#query').val()				
 				
-				
-				sparqlQ = sparqlQ.replace('{{xmin}}', map.getBounds().getWest() );
-				sparqlQ = sparqlQ.replace('{{xmax}}', map.getBounds().getEast() );
-				sparqlQ = sparqlQ.replace('{{ymin}}', map.getBounds().getSouth() );
-				sparqlQ = sparqlQ.replace('{{ymax}}', map.getBounds().getNorth() );
+				sparqlQ = sparqlQ.replace(/{{xmin}}/g, map.getBounds().getWest() );
+				sparqlQ = sparqlQ.replace(/{{xmax}}/g, map.getBounds().getEast() );
+				sparqlQ = sparqlQ.replace(/{{ymin}}/g, map.getBounds().getSouth() );
+				sparqlQ = sparqlQ.replace(/{{ymax}}/g, map.getBounds().getNorth() );
 
 
 				// Make an AJAX query to the Sparql endpoint
@@ -87,8 +100,7 @@
 				}).done( function(data){
 
 					// If the query succeeds
-
-					console.log("Success: \n\nGot " + data.results.bindings.length + " results"  );
+					$('#result_raw').text(JSON.stringify(data, null, 4));
 
 
 					// Transform the result from Virtuoso's Json to GeoJSON (not needed with Strabon which can do it natively)
@@ -97,18 +109,28 @@
 
 					$.each(data.results.bindings, function(i,bindings){
 
-						feature = {
-							type: "Feature",
-					        geometry: $.geo.WKT.parse(bindings.geom.value),
-					        properties: {
-					        	subject: bindings.subject.value,					        	
-					        	category: bindings.category.value
-					        }
-					    };
+						try {
+							feature = {
+								type: "Feature",
+						        geometry: $.geo.WKT.parse(bindings.geom.value),
+						        properties: {
+						        	subject: bindings.subject.value,					        	
+						        	category: bindings.category.value
+						        }
+						    };
+						}
+						catch(err) {
+						    feature = {
+								type: "Error",
+								value: err
+						    };
+						}
 
 						geojson.features.push( feature );
 					});
 
+
+					$('#result_geojson').text(JSON.stringify(geojson, null, 4));
 
 					// Display the GeoJSON
 
@@ -135,14 +157,21 @@
 
 				}).fail( function(jqXHR, textStatus, errorThrown){
 
-					// If the query fails, we display the error in the console
-
-					console.log("Failure: \n\n"+errorThrown+"\n"+jqXHR.responseText);
+					// If the query fails, we display the error
+					layer.clearLayers();
+					$('#result_raw').text("Failure: \n\n"+errorThrown+"\n"+jqXHR.responseText);
+					$('#result_geojson').text("");
 
 				});
 
+			}
 
-
+			function readFile(file){
+				var xmlhttp;
+				xmlhttp=new XMLHttpRequest();
+				xmlhttp.open('GET', file, false);
+				xmlhttp.send();
+				return xmlhttp.responseText;
 			}
 
 		</script>
@@ -151,8 +180,22 @@
 	<body>
 
 		<!-- This div actually displays the map -->
-
 		<div id="map" style="width: 600px; height: 400px"></div>
+		
+		Query <select id="query_select"></select> <button id="query_load">load</button><br/>
+		<textarea id="query"># no query</textarea>
+		<table style="width: 100%">
+			<tr>
+				<td style="width: 50%">
+					Result raw<br/>
+					<textarea id="result_raw">no result</textarea>
+				</td>
+				<td style="width: 50%">
+					Result geojson<br/>
+					<textarea id="result_geojson">no result</textarea>
+				</td>
+			</tr>
+		</table>
 
 	</body>
 </html>

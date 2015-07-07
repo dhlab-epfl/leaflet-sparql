@@ -1,0 +1,14 @@
+################################################
+# This query simply illustrates the {{xmin}},
+# {{ymin}}, ..., parameters
+################################################
+
+PREFIX virtrdf: <http://www.openlinksw.com/schemas/virtrdf#>
+ 
+SELECT  "Leaflet's Viewport" as ?subject
+        "POLYGON(({{xmin}} {{ymin}}, {{xmin}} {{ymax}}, {{xmax}} {{ymax}}, {{xmax}} {{ymin}}, {{xmin}} {{ymin}}))"^^virtrdf:Geometry as ?geom
+        "Experimental" as ?category
+ 
+WHERE   {
+ 
+}

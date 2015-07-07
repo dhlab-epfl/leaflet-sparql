@@ -1,9 +1,12 @@
-################################
-# Getting the place of persons
-################################
+################################################
+# This advanced query returns the geomgraphical
+# representation of the place where people
+# work at
+################################################
 
 PREFIX vtm_onto: <http://128.178.21.39:8080/vtm-ontology/>
 PREFIX vtm_data: <http://128.178.21.39:8080/vtm-testset/>
+PREFIX geo: <http://www.opengis.net/ont/geosparql#> 
 
 SELECT ?subject ?geom "none" as ?category
 WHERE 
@@ -11,7 +14,7 @@ WHERE
 
 	# A. Person
 
-	# A1. We get the mentions of the person
+	# A1. We get the dataContainers of the mentions of the person
 	?subject vtm_onto:hasMention ?personMention .
 
 	# A2. We get the dataContainers that compose that mention
@@ -48,7 +51,7 @@ WHERE
 	?placeGeometryMention vtm_onto:isComposedOf ?placeGeometryDataContainer .
 
 	# C4. We get the mention of the place of the insegnia
-	?placeGeometryDataContainer <http://www.opengis.net/ont/geosparql#geometry> ?geom .
+	?placeGeometryDataContainer geo:geometry ?geom .
 
 	
 }

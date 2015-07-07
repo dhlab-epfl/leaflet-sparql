@@ -1,3 +1,7 @@
+################################################
+# This query gets all triples with a geometry
+################################################
+
 PREFIX geo: <http://www.opengis.net/ont/geosparql#> 
 
 SELECT  ?subject ?geom "none" as ?category
