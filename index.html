@@ -64,7 +64,7 @@
 
 				$.each(queryFiles, function(i,item){
 					console.log(item);
-					$('#query_select').append( $('<option>',{value : readFile(item) }).text(item)); 
+					$('#query_select').append( $('<option>',{value : $.ajax({url:item,async:false}).responseText }).text(item)); 
 				});
 
 				$('#query_select').change(function(){
@@ -109,22 +109,18 @@
 
 					$.each(data.results.bindings, function(i,bindings){
 
-						try {
-							feature = {
-								type: "Feature",
-						        geometry: $.geo.WKT.parse(bindings.geom.value),
-						        properties: {
-						        	subject: bindings.subject.value,					        	
-						        	category: bindings.category.value
-						        }
-						    };
-						}
-						catch(err) {
-						    feature = {
-								type: "Error",
-								value: err
-						    };
-						}
+						feature = {
+							type: "Feature",
+					        geometry: $.geo.WKT.parse(bindings.geom.value),
+					        properties: {}
+					    };
+
+					    // We add each sparql variable to the geojson properties object
+					    $.each( data.head.vars, function(j, property){
+					    	if(property=='geom') return; // except the geom
+					    	feature.properties[property] = bindings[property].value;
+					    });
+						
 
 						geojson.features.push( feature );
 					});
@@ -138,14 +134,16 @@
 					L.geoJson(geojson, {
 
 						// With a different style depending on the category
+						/*
 						style: function (feature) {
-							if(feature.properties.category=='http://dhlab.epfl.ch/vtm/#class_lot'){
-						        return {color: "#08F"};
+							if(feature.properties.category=='building'){
+						        return {color: "#888"};
 							}
 							else{
-						        return {color: "#F00"};
+						        return {color: "#0F8"};
 							}
 					    },
+					    */
 
 					    // With a popup showing the subject
 					    onEachFeature: function (feature, layer) {
@@ -166,14 +164,6 @@
 
 			}
 
-			function readFile(file){
-				var xmlhttp;
-				xmlhttp=new XMLHttpRequest();
-				xmlhttp.open('GET', file, false);
-				xmlhttp.send();
-				return xmlhttp.responseText;
-			}
-
 		</script>
 
 	</head>
@@ -182,7 +172,7 @@
 		<!-- This div actually displays the map -->
 		<div id="map" style="width: 600px; height: 400px"></div>
 		
-		Query <select id="query_select"></select> <button id="query_load">load</button><br/>
+		Query <select id="query_select"></select><br/>
 		<textarea id="query"># no query</textarea>
 		<table style="width: 100%">
 			<tr>

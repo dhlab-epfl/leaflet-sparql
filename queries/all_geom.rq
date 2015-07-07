@@ -4,7 +4,7 @@
 
 PREFIX geo: <http://www.opengis.net/ont/geosparql#> 
 
-SELECT  ?subject ?geom "none" as ?category
+SELECT  ?subject ?geom
 WHERE   {
         ?subject geo:geometry ?geom .
 }
