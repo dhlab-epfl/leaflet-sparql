@@ -6,7 +6,7 @@ It depends on [Leaflet](http://leafletjs.com/) (webmapping library), [jQuery](ht
 
 It is thought as a base for a more complex web map (multiple/custom queries, editing capabilities, ...).
 
-Demo : http://rawgit.com/dhlab-epfl/leaflet-sparql/master/index.html
+Demo : http://128.178.21.39:8080/map/
 
 
 ## Notes about Virtuoso
